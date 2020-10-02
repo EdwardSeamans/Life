@@ -29,20 +29,20 @@ public class GenerationHistory {
     }
 
     public void publishToQueue(boolean[][] currentCells) {
-        boolean[][] generation = new boolean[GlobalSettings.ROWS][GlobalSettings.COLUMNS];
+        boolean[][] generation = new boolean[IterationSettings.ROWS][IterationSettings.COLUMNS];
         for (int index = 0; index < currentCells.length; index++) {
             System.arraycopy(currentCells[index], 0, generation[index], 0, currentCells[0].length);
         }
         incomingQueue.add(new Generation(generation));
     }
 
-    @Scheduled(fixedDelay = GlobalSettings.TARGET_FRAME_INTERVAL, initialDelay = 1000)
+    @Scheduled(fixedDelay = IterationSettings.TARGET_FRAME_INTERVAL, initialDelay = 1000)
     public void processFrame() {
         if (wasCycleDiscovered.get() || incomingQueue.isEmpty()) {
             incomingQueue.clear();
             return;
         }
-        while(history.size() > GlobalSettings.MAX_HISTORY) {
+        while(history.size() > IterationSettings.MAX_HISTORY) {
             history.remove(0);
             droppedGenerations++;
         }

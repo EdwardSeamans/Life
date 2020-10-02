@@ -13,11 +13,11 @@ public class FrameQueue {
     private final ConcurrentLinkedQueue<ArrayList<Byte>> frameQueue;
     private final FrameTimer frameTimer;
 
-    private static final int COLUMNS = GlobalSettings.COLUMNS;
+    private static final int COLUMNS = IterationSettings.COLUMNS;
 
-    private static final int ROWS = GlobalSettings.ROWS;
+    private static final int ROWS = IterationSettings.ROWS;
 
-    private static final int BYTES_PER_PIXEL = GlobalSettings.BYTES_PER_PIXEL;
+    private static final int BYTES_PER_PIXEL = IterationSettings.BYTES_PER_PIXEL;
 
     private byte[] lastReturnedFrame;
 
@@ -26,7 +26,7 @@ public class FrameQueue {
     public FrameQueue(FrameTimer frameTimer) {
         this.frameQueue = new ConcurrentLinkedQueue<>();
         this.frameTimer = frameTimer;
-        lastReturnedFrame = new byte[2 * COLUMNS * 2 * ROWS * BYTES_PER_PIXEL];
+        lastReturnedFrame = new byte[IterationSettings.SCALING_FACTOR * COLUMNS * IterationSettings.SCALING_FACTOR * ROWS * BYTES_PER_PIXEL];
     }
 
     public void publishToQueue(byte[] frame) {
@@ -38,7 +38,7 @@ public class FrameQueue {
     }
 
     public byte[] getNextFrame() {
-        byte[] workingArray = new byte[2 * COLUMNS * 2 * ROWS * BYTES_PER_PIXEL];
+        byte[] workingArray = new byte[IterationSettings.SCALING_FACTOR * COLUMNS * IterationSettings.SCALING_FACTOR * ROWS * BYTES_PER_PIXEL];
         if (frameQueue.isEmpty()) {
             return lastReturnedFrame;
         }
