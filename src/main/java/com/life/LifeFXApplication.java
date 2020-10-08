@@ -7,10 +7,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
 
-public class LifeUiApplication extends Application {
+public class LifeFXApplication extends Application {
 
     private ConfigurableApplicationContext applicationContext;
-    private static final Logger LOG = LoggerFactory.getLogger(LifeUiApplication.class);
+    private static final Logger LOG = LoggerFactory.getLogger(LifeFXApplication.class);
 
     @Override
     public void init() {

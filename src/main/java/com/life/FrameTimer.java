@@ -9,7 +9,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @Component
 public class FrameTimer {
-    private AtomicInteger frames;
+    private final AtomicInteger frames;
     private final static Logger LOG = LoggerFactory.getLogger(FrameTimer.class);
     private boolean wasCycleDiscovered;
 
@@ -26,10 +26,10 @@ public class FrameTimer {
         wasCycleDiscovered = true;
     }
 
-    @Scheduled(fixedRate = 5000, initialDelay = 1000)
+    @Scheduled(fixedRate = 10000, initialDelay = 1000)
     public void logFramesPerSecond() {
         if (!wasCycleDiscovered) {
-            LOG.info("Frames per second: " + frames.getAndSet(0)/5);
+            LOG.info("Frames per 10 seconds: " + frames.getAndSet(0));
         }
     }
 }

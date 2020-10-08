@@ -1,12 +1,11 @@
 package com.life;
 
-import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.PixelFormat;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
-import javafx.scene.layout.HBox;
+import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,9 +16,9 @@ import org.springframework.stereotype.Controller;
 import java.nio.ByteBuffer;
 
 @Controller
-public class LifeFx implements ApplicationListener<StageReadyEvent> {
+public class LifeFxController implements ApplicationListener<StageReadyEvent> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(LifeFx.class);
+    private static final Logger LOG = LoggerFactory.getLogger(LifeFxController.class);
 
     private static final int COLUMNS = IterationSettings.COLUMNS;
     private static final int ROWS = IterationSettings.ROWS;
@@ -30,7 +29,7 @@ public class LifeFx implements ApplicationListener<StageReadyEvent> {
     private PixelWriter pixelWriter;
     private static final PixelFormat<ByteBuffer> pixelFormat = PixelFormat.getByteRgbInstance();
 
-    public LifeFx(FrameQueue frameQueue) {
+    public LifeFxController(FrameQueue frameQueue) {
         this.frameQueue = frameQueue;
     }
 
@@ -43,9 +42,7 @@ public class LifeFx implements ApplicationListener<StageReadyEvent> {
         this.pixelWriter = writableImage.getPixelWriter();
         ImageView imageView = new ImageView(writableImage);
 
-        HBox root = new HBox(imageView);
-        root.setAlignment(Pos.CENTER);
-        root.setStyle("-fx-background-color: black");
+        AnchorPane root = new AnchorPane(imageView);
 
         Scene scene = new Scene(root, COLUMNS * IterationSettings.SCALING_FACTOR, ROWS * IterationSettings.SCALING_FACTOR);
         stage.setScene(scene);

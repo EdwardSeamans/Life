@@ -14,6 +14,6 @@ public class LifeSpringBootApplication {
     private static final Logger LOG = LoggerFactory.getLogger(LifeSpringBootApplication.class);
 
     public static void main(String[] args) {
-        Application.launch(LifeUiApplication.class, args);
+        Application.launch(LifeFXApplication.class, args);
     }
 }

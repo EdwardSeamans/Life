@@ -124,6 +124,10 @@ public class Life {
     public void populateBufferFromCells(boolean [] cells, byte[] buffer) {
         byte[] cellColorChunk;
         byte[] rowChunk = new byte[COLUMNS * SCALING_FACTOR * BYTES_PER_PIXEL];
+
+        int bufferPosition = 0;
+        int bufferIncrement = COLUMNS * SCALING_FACTOR * BYTES_PER_PIXEL;
+
         for (int rowIndex = 0; rowIndex < ROWS; rowIndex++) {
             for (int columnIndex = 0; columnIndex < COLUMNS; columnIndex++) {
                 if (cells[COLUMNS * rowIndex + columnIndex]) {
@@ -134,7 +138,8 @@ public class Life {
                 System.arraycopy(cellColorChunk, 0, rowChunk, columnIndex * SCALING_FACTOR * BYTES_PER_PIXEL, cellColorChunk.length);
             }
             for (int scalingRepetitions = 0; scalingRepetitions < SCALING_FACTOR; scalingRepetitions++) {
-                System.arraycopy(rowChunk, 0, buffer, scalingRepetitions * rowIndex * BYTES_PER_PIXEL * SCALING_FACTOR * SCALING_FACTOR * COLUMNS , rowChunk.length);
+                System.arraycopy(rowChunk, 0, buffer, bufferPosition , rowChunk.length);
+                bufferPosition += bufferIncrement;
             }
         }
     }

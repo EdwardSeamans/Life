@@ -57,7 +57,6 @@ public class GenerationHistory {
             wasCycleDiscovered.set(true);
             history.clear();
             frameTimer.setWasCycleDiscovered();
-            return;
         }
         else {
             history.add(current);
