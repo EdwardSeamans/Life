@@ -16,12 +16,6 @@ public class Life {
 
     private static final int COLUMNS = IterationSettings.COLUMNS;
     private static final int ROWS = IterationSettings.ROWS;
-    private static final int INITIAL_POPULATION_PERCENT = IterationSettings.INITIAL_POPULATION_PERCENT;
-    private static final int[] BIRTH = IterationSettings.BIRTH;
-    private static final int[] SURVIVE = IterationSettings.SURVIVE;
-
-    private static final long TARGET_FRAME_INTERVAL = IterationSettings.TARGET_FRAME_INTERVAL;
-    private static final long TARGET_FRAME_RATE = IterationSettings.TARGET_FRAME_RATE;
     private static final int BYTES_PER_PIXEL = IterationSettings.BYTES_PER_PIXEL;
     private static final int SCALING_FACTOR = IterationSettings.SCALING_FACTOR;
     private static final byte[] LIVE_COLOR = IterationSettings.GREEN;
@@ -80,7 +74,7 @@ public class Life {
         setRandomSeed();
 
         for (int index = 0; index < ROWS * COLUMNS; index++) {
-            currentCells[index] = random.nextInt(100) < INITIAL_POPULATION_PERCENT;
+            currentCells[index] = random.nextInt(100) < IterationSettings.INITIAL_POPULATION_PERCENT;
         }
 
         populateBufferFromCells(currentCells, currentBuffer);
@@ -159,9 +153,9 @@ public class Life {
         System.arraycopy(tempBuffer, 0, nextBuffer, 0, tempBuffer.length);
     }
 
-    @Scheduled(fixedDelay = TARGET_FRAME_INTERVAL, initialDelay = 1000)
+    @Scheduled(fixedDelay = IterationSettings.TARGET_FRAME_INTERVAL, initialDelay = 1000)
     public void letThereBeLight() {
-        if (frameQueue.getBufferedFrameCount() > TARGET_FRAME_RATE * 2) {
+        if (frameQueue.getBufferedFrameCount() > IterationSettings.TARGET_FRAME_RATE * 2) {
             LOG.info("FrameBuffer is full.");
             return;
         }
@@ -191,11 +185,11 @@ public class Life {
             liveCellStates[index] = false;
         }
 
-        for (int neighborCount : BIRTH) {
+        for (int neighborCount : IterationSettings.BIRTH) {
             deadCellStates[neighborCount] = true;
         }
 
-        for (int neighborCount : SURVIVE) {
+        for (int neighborCount : IterationSettings.SURVIVE) {
             liveCellStates[neighborCount] = true;
         }
     }
