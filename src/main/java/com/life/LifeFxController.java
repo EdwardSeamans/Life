@@ -23,6 +23,8 @@ public class LifeFxController implements ApplicationListener<StageReadyEvent> {
     private static final int COLUMNS = IterationSettings.COLUMNS;
     private static final int ROWS = IterationSettings.ROWS;
     private static final int BYTES_PER_PIXEL = IterationSettings.BYTES_PER_PIXEL;
+    private static final int SCALING_FACTOR = IterationSettings.SCALING_FACTOR;
+    private static final long TARGET_FRAME_INTERVAL = IterationSettings.TARGET_FRAME_INTERVAL;
 
     private final FrameQueue frameQueue;
 
@@ -38,22 +40,22 @@ public class LifeFxController implements ApplicationListener<StageReadyEvent> {
         LOG.info("LifeFx Thread:" + Thread.currentThread().getName());
         Stage stage = stageReadyEvent.getStage();
 
-        WritableImage writableImage = new WritableImage(COLUMNS * IterationSettings.SCALING_FACTOR, ROWS * IterationSettings.SCALING_FACTOR);
+        WritableImage writableImage = new WritableImage(COLUMNS * SCALING_FACTOR, ROWS * SCALING_FACTOR);
         this.pixelWriter = writableImage.getPixelWriter();
         ImageView imageView = new ImageView(writableImage);
 
         AnchorPane root = new AnchorPane(imageView);
 
-        Scene scene = new Scene(root, COLUMNS * IterationSettings.SCALING_FACTOR, ROWS * IterationSettings.SCALING_FACTOR);
+        Scene scene = new Scene(root, COLUMNS * SCALING_FACTOR, ROWS * SCALING_FACTOR);
         stage.setScene(scene);
         stage.setTitle("Life");
         stage.setResizable(false);
         stage.show();
     }
 
-    @Scheduled(fixedRate = IterationSettings.TARGET_FRAME_INTERVAL, initialDelay = 1000)
+    @Scheduled(fixedRate = TARGET_FRAME_INTERVAL, initialDelay = 1000)
     public void renderFrame() {
-        pixelWriter.setPixels(0, 0, COLUMNS * IterationSettings.SCALING_FACTOR, ROWS * IterationSettings.SCALING_FACTOR,
-                pixelFormat, frameQueue.getNextFrame(), 0, COLUMNS * BYTES_PER_PIXEL * IterationSettings.SCALING_FACTOR);
+        pixelWriter.setPixels(0, 0, COLUMNS * SCALING_FACTOR, ROWS * SCALING_FACTOR,
+                pixelFormat, frameQueue.getNextFrame(), 0, COLUMNS * BYTES_PER_PIXEL * SCALING_FACTOR);
     }
 }
