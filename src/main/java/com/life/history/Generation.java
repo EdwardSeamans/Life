@@ -1,4 +1,4 @@
-package com.life;
+package com.life.history;
 
 import java.util.Arrays;
 

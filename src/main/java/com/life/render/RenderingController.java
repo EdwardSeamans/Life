@@ -1,5 +1,7 @@
-package com.life;
+package com.life.render;
 
+import com.life.configuration.IterationSettings;
+import com.life.utility.StageReadyEvent;
 import javafx.scene.Scene;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.PixelFormat;
@@ -16,9 +18,9 @@ import org.springframework.stereotype.Controller;
 import java.nio.ByteBuffer;
 
 @Controller
-public class LifeFxController implements ApplicationListener<StageReadyEvent> {
+public class RenderingController implements ApplicationListener<StageReadyEvent> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(LifeFxController.class);
+    private static final Logger LOG = LoggerFactory.getLogger(RenderingController.class);
 
     private static final int COLUMNS = IterationSettings.COLUMNS;
     private static final int ROWS = IterationSettings.ROWS;
@@ -31,7 +33,7 @@ public class LifeFxController implements ApplicationListener<StageReadyEvent> {
     private PixelWriter pixelWriter;
     private static final PixelFormat<ByteBuffer> pixelFormat = PixelFormat.getByteRgbInstance();
 
-    public LifeFxController(FrameQueue frameQueue) {
+    public RenderingController(FrameQueue frameQueue) {
         this.frameQueue = frameQueue;
     }
 

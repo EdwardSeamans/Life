@@ -1,4 +1,4 @@
-package com.life;
+package com.life.utility;
 
 import javafx.stage.Stage;
 import org.springframework.context.ApplicationEvent;

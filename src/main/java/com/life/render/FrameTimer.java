@@ -1,4 +1,4 @@
-package com.life;
+package com.life.render;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

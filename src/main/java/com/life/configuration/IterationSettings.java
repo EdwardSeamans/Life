@@ -1,4 +1,4 @@
-package com.life;
+package com.life.configuration;
 
 public class IterationSettings {
     public static final int COLUMNS = 300;                      //Width - Width in Cells

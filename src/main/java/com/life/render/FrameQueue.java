@@ -1,5 +1,6 @@
-package com.life;
+package com.life.render;
 
+import com.life.configuration.IterationSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;

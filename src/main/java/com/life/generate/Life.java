@@ -1,5 +1,9 @@
-package com.life;
+package com.life.generate;
 
+import com.life.LifeSpringBootApplication;
+import com.life.configuration.IterationSettings;
+import com.life.history.GenerationHistory;
+import com.life.render.FrameQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;

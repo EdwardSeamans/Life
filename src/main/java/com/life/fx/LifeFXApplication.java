@@ -1,4 +1,6 @@
-package com.life;
+package com.life.fx;
+import com.life.LifeSpringBootApplication;
+import com.life.utility.StageReadyEvent;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.stage.Stage;
@@ -14,11 +16,13 @@ public class LifeFXApplication extends Application {
 
     @Override
     public void init() {
+        LOG.info("Invoking Boot Application in init() method.");
         applicationContext = new SpringApplicationBuilder(LifeSpringBootApplication.class).run();
     }
 
     @Override
     public void start(Stage stage) {
+        LOG.info("Starting FX Application.");
         Thread.currentThread().setName("JavaFX Thread");
         applicationContext.publishEvent(new StageReadyEvent(stage));
     }
