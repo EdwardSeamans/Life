@@ -25,6 +25,7 @@ public class FrameQueue {
     private static final Logger LOG = LoggerFactory.getLogger(FrameQueue.class);
 
     public FrameQueue(FrameTimer frameTimer) {
+        LOG.info("Construction thread is " + Thread.currentThread().getName());
         this.frameQueue = new ConcurrentLinkedQueue<>();
         this.frameTimer = frameTimer;
         lastReturnedFrame = new byte[IterationSettings.SCALING_FACTOR * COLUMNS * IterationSettings.SCALING_FACTOR * ROWS * BYTES_PER_PIXEL];

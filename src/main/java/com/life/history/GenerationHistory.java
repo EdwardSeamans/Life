@@ -30,12 +30,8 @@ public class GenerationHistory {
         droppedGenerations = 0;
     }
 
-    public void publishToQueue(boolean[][] currentCells) {
-        boolean[][] generation = new boolean[IterationSettings.ROWS][IterationSettings.COLUMNS];
-        for (int index = 0; index < currentCells.length; index++) {
-            System.arraycopy(currentCells[index], 0, generation[index], 0, currentCells[0].length);
-        }
-        incomingQueue.add(new Generation(generation));
+    public void publishToQueue(boolean[] currentCells) {
+        incomingQueue.add(new Generation(currentCells));
     }
 
     @Scheduled(fixedDelay = IterationSettings.TARGET_FRAME_INTERVAL, initialDelay = 1000)

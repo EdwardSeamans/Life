@@ -16,14 +16,15 @@ public class LifeFXApplication extends Application {
 
     @Override
     public void init() {
-        LOG.info("Invoking Boot Application in init() method.");
+        Thread.currentThread().setName("Boot");
+        LOG.info("Invoking Boot Application in init() method on " + Thread.currentThread().getName());
         applicationContext = new SpringApplicationBuilder(LifeSpringBootApplication.class).run();
     }
 
     @Override
     public void start(Stage stage) {
-        LOG.info("Starting FX Application.");
-        Thread.currentThread().setName("JavaFX Thread");
+        Thread.currentThread().setName("JavaFX-Thread");
+        LOG.info("Starting FX Application on " + Thread.currentThread().getName());
         applicationContext.publishEvent(new StageReadyEvent(stage));
     }
 
