@@ -3,8 +3,13 @@ package com.life.generate;
 import com.life.configuration.IterationSettings;
 import com.life.event.StartRunEvent;
 import com.life.event.StopRunEvent;
+import com.life.fxcontroller.RuntimeController;
 import com.life.history.GenerationHistory;
 import com.life.render.FrameQueue;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.scene.paint.Color;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
@@ -31,7 +36,7 @@ public class Life {
     private static final long TARGET_FRAME_RATE = IterationSettings.TARGET_FRAME_RATE;
     private static final int BYTES_PER_PIXEL = IterationSettings.BYTES_PER_PIXEL;
     private static final int SCALING_FACTOR = IterationSettings.SCALING_FACTOR;
-    private static final byte[] LIVE_COLOR = IterationSettings.GREEN;
+    private static final byte[] LIVE_COLOR = new byte[3];
     private static final byte[] DEAD_COLOR = IterationSettings.BLACK;
 
     private final int[] indicesNorth = new int[ROWS * COLUMNS];
@@ -59,14 +64,18 @@ public class Life {
 
     private final FrameQueue frameQueue;
     private final GenerationHistory generationHistory;
+    private final RuntimeController runtimeController;
+    private final ObjectProperty<Color> liveColorProperty;
+    private boolean isColorChanged;
 
     private final static Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
     private boolean running = false;
 
-    Life(FrameQueue frameQueue, GenerationHistory generationHistory) {
+    Life(FrameQueue frameQueue, GenerationHistory generationHistory, RuntimeController runtimeController) {
         this.frameQueue = frameQueue;
         this.generationHistory = generationHistory;
+        this.runtimeController = runtimeController;
         this.random = new Random();
         this.currentCells = new boolean[ROWS * COLUMNS];
         this.nextCells = new boolean[ROWS * COLUMNS];
@@ -76,10 +85,8 @@ public class Life {
         this.tempBuffer = new byte[BYTES_PER_PIXEL * COLUMNS * SCALING_FACTOR * ROWS * SCALING_FACTOR];
         this.deadCellStates = new boolean[9];
         this.liveCellStates = new boolean[9];
-        for (int scalingFactorRepitition = 0; scalingFactorRepitition < SCALING_FACTOR; scalingFactorRepitition++) {
-            System.arraycopy(LIVE_COLOR, 0, LIVE_COLOR_CHUNK, scalingFactorRepitition * BYTES_PER_PIXEL, LIVE_COLOR.length);
-            System.arraycopy(DEAD_COLOR, 0, DEAD_COLOR_CHUNK, scalingFactorRepitition * BYTES_PER_PIXEL, DEAD_COLOR.length);
-        }
+        liveColorProperty = runtimeController.colorProperty();
+        liveColorProperty.addListener((observableValue, oldValue, newValue) -> isColorChanged = true);
     }
 
     @PostConstruct
@@ -95,6 +102,8 @@ public class Life {
 
         setRules();
         buildIndexTranslationArrays();
+
+        updateColor();
     }
 
     public void iterateCells() {
@@ -168,6 +177,12 @@ public class Life {
 
     @Scheduled(fixedDelay = TARGET_FRAME_INTERVAL, initialDelay = 1000)
     public void letThereBeLight() {
+        if (isColorChanged) {
+            updateColor();
+            isColorChanged = false;
+            populateBufferFromCells(currentCells, currentBuffer);
+            frameQueue.publishToQueue(currentBuffer);
+        }
         if (!running) {
             return;
         }
@@ -175,11 +190,23 @@ public class Life {
             LOG.info("FrameBuffer is full.");
             return;
         }
+
         iterateCells();
         populateBufferFromCells(nextCells, nextBuffer);
         cycleBuffers();
         frameQueue.publishToQueue(currentBuffer);
         generationHistory.publishToQueue(currentCells);
+    }
+
+    public void updateColor() {
+        Color currentColor = liveColorProperty.getValue();
+        LIVE_COLOR[0] = (byte)(Math.floor(currentColor.getRed() * 255));
+        LIVE_COLOR[1] = (byte)(Math.floor(currentColor.getGreen() * 255));
+        LIVE_COLOR[2] = (byte)(Math.floor(currentColor.getBlue() * 255));
+        for (int scalingFactorRepitition = 0; scalingFactorRepitition < SCALING_FACTOR; scalingFactorRepitition++) {
+            System.arraycopy(LIVE_COLOR, 0, LIVE_COLOR_CHUNK, scalingFactorRepitition * BYTES_PER_PIXEL, LIVE_COLOR.length);
+            System.arraycopy(DEAD_COLOR, 0, DEAD_COLOR_CHUNK, scalingFactorRepitition * BYTES_PER_PIXEL, DEAD_COLOR.length);
+        }
     }
 
     public void setRandomSeed() {
