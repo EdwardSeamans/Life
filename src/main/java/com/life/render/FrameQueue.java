@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -14,21 +15,21 @@ public class FrameQueue {
     private final ConcurrentLinkedQueue<ArrayList<Byte>> frameQueue;
     private final FrameTimer frameTimer;
 
-    private static final int COLUMNS = IterationSettings.COLUMNS;
+    private int columns = IterationSettings.COLUMNS;
 
-    private static final int ROWS = IterationSettings.ROWS;
+    private int rows = IterationSettings.ROWS;
 
-    private static final int BYTES_PER_PIXEL = IterationSettings.BYTES_PER_PIXEL;
+    private int bytesPerPixel = IterationSettings.BYTES_PER_PIXEL;
 
     private byte[] lastReturnedFrame;
 
-    private static final Logger LOG = LoggerFactory.getLogger(FrameQueue.class);
+    private final static Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
     public FrameQueue(FrameTimer frameTimer) {
         LOG.info("Construction thread is " + Thread.currentThread().getName());
         this.frameQueue = new ConcurrentLinkedQueue<>();
         this.frameTimer = frameTimer;
-        lastReturnedFrame = new byte[IterationSettings.SCALING_FACTOR * COLUMNS * IterationSettings.SCALING_FACTOR * ROWS * BYTES_PER_PIXEL];
+        lastReturnedFrame = new byte[IterationSettings.SCALING_FACTOR * columns * IterationSettings.SCALING_FACTOR * rows * bytesPerPixel];
     }
 
     public void publishToQueue(byte[] frame) {
@@ -40,7 +41,7 @@ public class FrameQueue {
     }
 
     public byte[] getNextFrame() {
-        byte[] workingArray = new byte[IterationSettings.SCALING_FACTOR * COLUMNS * IterationSettings.SCALING_FACTOR * ROWS * BYTES_PER_PIXEL];
+        byte[] workingArray = new byte[IterationSettings.SCALING_FACTOR * columns * IterationSettings.SCALING_FACTOR * rows * bytesPerPixel];
         if (frameQueue.isEmpty()) {
             return lastReturnedFrame;
         }

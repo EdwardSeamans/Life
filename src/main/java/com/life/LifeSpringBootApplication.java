@@ -8,11 +8,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
+import java.lang.invoke.MethodHandles;
+
 @SpringBootApplication
 @EnableScheduling
 public class LifeSpringBootApplication {
 
-    private static final Logger LOG = LoggerFactory.getLogger(LifeSpringBootApplication.class);
+    private final static Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
     public static void main(String[] args) {
         LOG.info("Invoking FX Application in main() method.");

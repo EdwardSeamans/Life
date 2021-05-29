@@ -1,7 +1,7 @@
 package com.life.render;
 
 import com.life.configuration.IterationSettings;
-import com.life.utility.StageReadyEvent;
+import com.life.event.RenderingStageReadyEvent;
 import javafx.scene.Scene;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.PixelFormat;
@@ -11,17 +11,15 @@ import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.scheduling.config.FixedRateTask;
 import org.springframework.stereotype.Controller;
 
+import java.lang.invoke.MethodHandles;
 import java.nio.ByteBuffer;
 
 @Controller
-public class RenderingController implements ApplicationListener<StageReadyEvent> {
-
-    private static final Logger LOG = LoggerFactory.getLogger(RenderingController.class);
+public class RenderingController {
 
     private static final int COLUMNS = IterationSettings.COLUMNS;
     private static final int ROWS = IterationSettings.ROWS;
@@ -34,14 +32,16 @@ public class RenderingController implements ApplicationListener<StageReadyEvent>
     private PixelWriter pixelWriter;
     private static final PixelFormat<ByteBuffer> pixelFormat = PixelFormat.getByteRgbInstance();
 
+    private final static Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+
     public RenderingController(FrameQueue frameQueue) {
         this.frameQueue = frameQueue;
     }
 
-    @Override
-    public void onApplicationEvent(StageReadyEvent stageReadyEvent) {
+    @EventListener
+    public void initialize(RenderingStageReadyEvent renderingStageReadyEvent) {
         LOG.info("LifeFx Thread:" + Thread.currentThread().getName());
-        Stage stage = stageReadyEvent.getStage();
+        Stage stage = renderingStageReadyEvent.getStage();
 
         WritableImage writableImage = new WritableImage(COLUMNS * SCALING_FACTOR, ROWS * SCALING_FACTOR);
         this.pixelWriter = writableImage.getPixelWriter();

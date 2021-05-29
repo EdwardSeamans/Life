@@ -1,6 +1,7 @@
 package com.life.fx;
 import com.life.LifeSpringBootApplication;
-import com.life.utility.StageReadyEvent;
+import com.life.event.RenderingStageReadyEvent;
+import com.life.event.RuntimeStageReadyEvent;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.stage.Stage;
@@ -9,10 +10,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
 
+import java.lang.invoke.MethodHandles;
+
 public class LifeFXApplication extends Application {
 
     private ConfigurableApplicationContext applicationContext;
-    private static final Logger LOG = LoggerFactory.getLogger(LifeFXApplication.class);
+    private final static Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
     @Override
     public void init() {
@@ -25,7 +28,7 @@ public class LifeFXApplication extends Application {
     public void start(Stage stage) {
         Thread.currentThread().setName("JavaFX-Thread");
         LOG.info("Starting FX Application on " + Thread.currentThread().getName());
-        applicationContext.publishEvent(new StageReadyEvent(stage));
+        applicationContext.publishEvent(new RuntimeStageReadyEvent(stage));
     }
 
     @Override

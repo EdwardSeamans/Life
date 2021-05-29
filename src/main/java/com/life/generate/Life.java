@@ -1,15 +1,18 @@
 package com.life.generate;
 
-import com.life.LifeSpringBootApplication;
 import com.life.configuration.IterationSettings;
+import com.life.event.StartRunEvent;
+import com.life.event.StopRunEvent;
 import com.life.history.GenerationHistory;
 import com.life.render.FrameQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import java.lang.invoke.MethodHandles;
 import java.util.Arrays;
 import java.util.Random;
 
@@ -30,7 +33,6 @@ public class Life {
     private static final int SCALING_FACTOR = IterationSettings.SCALING_FACTOR;
     private static final byte[] LIVE_COLOR = IterationSettings.GREEN;
     private static final byte[] DEAD_COLOR = IterationSettings.BLACK;
-
 
     private final int[] indicesNorth = new int[ROWS * COLUMNS];
     private final int[] indicesNorthEast = new int[ROWS * COLUMNS];
@@ -55,11 +57,12 @@ public class Life {
     private final boolean[] deadCellStates;
     private final boolean[] liveCellStates;
 
-
     private final FrameQueue frameQueue;
     private final GenerationHistory generationHistory;
 
-    private final static Logger LOG = LoggerFactory.getLogger(LifeSpringBootApplication.class);
+    private final static Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+
+    private boolean running = false;
 
     Life(FrameQueue frameQueue, GenerationHistory generationHistory) {
         this.frameQueue = frameQueue;
@@ -165,6 +168,9 @@ public class Life {
 
     @Scheduled(fixedDelay = TARGET_FRAME_INTERVAL, initialDelay = 1000)
     public void letThereBeLight() {
+        if (!running) {
+            return;
+        }
         if (frameQueue.getBufferedFrameCount() > TARGET_FRAME_RATE * 2) {
             LOG.info("FrameBuffer is full.");
             return;
@@ -173,7 +179,7 @@ public class Life {
         populateBufferFromCells(nextCells, nextBuffer);
         cycleBuffers();
         frameQueue.publishToQueue(currentBuffer);
-        //generationHistory.publishToQueue(currentCells);
+        generationHistory.publishToQueue(currentCells);
     }
 
     public void setRandomSeed() {
@@ -273,5 +279,15 @@ public class Life {
             indicesNorthWest[i] = indicesNorth[i];
             indicesNorthWest[i] += indicesWest[i];
         }
+    }
+
+    @EventListener
+    public void start(StartRunEvent event) {
+        running = true;
+    }
+
+    @EventListener
+    public void stop(StopRunEvent event) {
+        running = false;
     }
 }
