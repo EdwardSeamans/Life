@@ -7,8 +7,6 @@ import com.life.fxcontroller.RuntimeController;
 import com.life.history.GenerationHistory;
 import com.life.render.FrameQueue;
 import javafx.beans.property.ObjectProperty;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.scene.paint.Color;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,6 +69,9 @@ public class Life {
     private final static Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
     private boolean running = false;
+
+    private long startTimer;
+    private long stopTimer;
 
     Life(FrameQueue frameQueue, GenerationHistory generationHistory, RuntimeController runtimeController) {
         this.frameQueue = frameQueue;
@@ -191,7 +192,7 @@ public class Life {
             return;
         }
 
-        iterateCells();
+        iterateCells(); //4.3ms
         populateBufferFromCells(nextCells, nextBuffer);
         cycleBuffers();
         frameQueue.publishToQueue(currentBuffer);

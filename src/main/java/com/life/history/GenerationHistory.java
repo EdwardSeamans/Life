@@ -7,6 +7,7 @@ import javafx.beans.property.LongProperty;
 import javafx.beans.property.SimpleLongProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -22,7 +23,8 @@ public class GenerationHistory implements Resettable {
     private final ConcurrentLinkedQueue<Generation> incomingQueue;
     private final ArrayList<Generation> history;
     private final FrameTimer frameTimer;
-    private final LongProperty droppedGenerations;
+    private long droppedGenerations;
+    private long totalGenerations;
 
     private final static Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
@@ -31,13 +33,15 @@ public class GenerationHistory implements Resettable {
         wasCycleDiscovered = new AtomicBoolean(false);
         incomingQueue = new ConcurrentLinkedQueue<>();
         history = new ArrayList<>();
-        droppedGenerations = new SimpleLongProperty(0);
+        droppedGenerations = 0;
+        totalGenerations = 0;
     }
 
     public void publishToQueue(boolean[] currentCells) {
         if (wasCycleDiscovered.get()) {
             return;
         }
+        totalGenerations++;
         incomingQueue.add(new Generation(currentCells));
     }
 
@@ -47,19 +51,21 @@ public class GenerationHistory implements Resettable {
             return;
         }
         while(history.size() > IterationSettings.MAX_HISTORY) {
-            history.remove(0);
-            droppedGenerations.add(1L);
+            history.remove(1);
+            droppedGenerations++;
         }
         Generation current = incomingQueue.remove();
         if (history.contains(current)) {
-            long initialGeneration = history.indexOf(current) + 1 + droppedGenerations.get();
+            wasCycleDiscovered.set(true);
+            long initialGeneration = history.indexOf(current) + 1 + droppedGenerations;
             history.add(current);
-            long repetitionGeneration = history.size() + droppedGenerations.get();
+            long repetitionGeneration = history.size() + droppedGenerations;
             long cyclePeriod = repetitionGeneration - initialGeneration;
             LOG.info("Cycle detected from generation " + initialGeneration + " to generation " + repetitionGeneration + ".");
             LOG.info("The cycle period was " + cyclePeriod + " generations.");
             LOG.info("The unprocessed incoming queue size at the time of cycle discovery was " + incomingQueue.size() + " generations.");
-            wasCycleDiscovered.set(true);
+            LOG.info("There were a total of " + totalGenerations + " generations before a cycle was discovered.");
+            LOG.info("There were a total of " + droppedGenerations + " dropped generations.");
             history.clear();
             frameTimer.setWasCycleDiscovered();
         }
@@ -73,6 +79,6 @@ public class GenerationHistory implements Resettable {
         wasCycleDiscovered.set(false);
         incomingQueue.clear();
         history.clear();
-        droppedGenerations.set(0);
+        droppedGenerations= 0;
     }
 }
