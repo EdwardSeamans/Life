@@ -1,5 +1,6 @@
 package com.life.fxcontroller;
 
+import com.life.configuration.IterationSettings;
 import com.life.event.RenderingStageReadyEvent;
 import com.life.event.RuntimeStageReadyEvent;
 import com.life.event.StartRunEvent;
@@ -30,6 +31,12 @@ public class RuntimeController {
     private ColorPicker colorPicker;
 
     ConfigurationController configurationController;
+
+    private static final int COLUMNS = IterationSettings.COLUMNS;
+    private static final int ROWS = IterationSettings.ROWS;
+    private static final int INITIAL_POPULATION_PERCENT = IterationSettings.INITIAL_POPULATION_PERCENT;
+    private static final int[] BIRTH = IterationSettings.BIRTH;
+    private static final int[] SURVIVE = IterationSettings.SURVIVE;
 
     private final static Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 

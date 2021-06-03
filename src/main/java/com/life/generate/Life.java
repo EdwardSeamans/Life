@@ -2,14 +2,10 @@ package com.life.generate;
 
 import com.life.configuration.IterationSettings;
 import com.life.event.StartRunEvent;
-import com.life.event.StopRunEvent;
-import com.life.fxcontroller.RuntimeController;
 import com.life.history.GenerationHistory;
-import com.life.render.FrameQueue;
-import javafx.beans.property.ObjectProperty;
-import javafx.scene.paint.Color;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -18,6 +14,10 @@ import javax.annotation.PostConstruct;
 import java.lang.invoke.MethodHandles;
 import java.util.Arrays;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import static com.life.configuration.IterationSettings.TARGET_FRAME_INTERVAL;
+import static com.life.configuration.IterationSettings.TARGET_FRAME_RATE;
 
 @Component
 public class Life {
@@ -30,13 +30,6 @@ public class Life {
     private static final int[] BIRTH = IterationSettings.BIRTH;
     private static final int[] SURVIVE = IterationSettings.SURVIVE;
 
-    private static final long TARGET_FRAME_INTERVAL = IterationSettings.TARGET_FRAME_INTERVAL;
-    private static final long TARGET_FRAME_RATE = IterationSettings.TARGET_FRAME_RATE;
-    private static final int BYTES_PER_PIXEL = IterationSettings.BYTES_PER_PIXEL;
-    private static final int SCALING_FACTOR = IterationSettings.SCALING_FACTOR;
-    private static final byte[] LIVE_COLOR = new byte[3];
-    private static final byte[] DEAD_COLOR = IterationSettings.BLACK;
-
     private final int[] indicesNorth = new int[ROWS * COLUMNS];
     private final int[] indicesNorthEast = new int[ROWS * COLUMNS];
     private final int[] indicesEast = new int[ROWS * COLUMNS];
@@ -46,65 +39,46 @@ public class Life {
     private final int[] indicesWest = new int[ROWS * COLUMNS];
     private final int[] indicesNorthWest = new int[ROWS * COLUMNS];
 
-    private final byte[] LIVE_COLOR_CHUNK = new byte[BYTES_PER_PIXEL * SCALING_FACTOR];
-    private final byte[] DEAD_COLOR_CHUNK = new byte[BYTES_PER_PIXEL * SCALING_FACTOR];
-
     private final boolean[] currentCells;
     private final boolean[] nextCells;
     private final boolean[] tempCells;
 
-    private final byte[] currentBuffer;
-    private final byte[] nextBuffer;
-    private final byte[] tempBuffer;
-
     private final boolean[] deadCellStates;
     private final boolean[] liveCellStates;
 
-    private final FrameQueue frameQueue;
-    private final GenerationHistory generationHistory;
-    private final RuntimeController runtimeController;
-    private final ObjectProperty<Color> liveColorProperty;
-    private boolean isColorChanged;
+    private final AtomicBoolean wasCycleDiscovered;
+
+    private final ApplicationContext context;
+    private final GenerationQueue generationQueue;
 
     private final static Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-    private boolean running = false;
-
-    private long startTimer;
-    private long stopTimer;
-
-    Life(FrameQueue frameQueue, GenerationHistory generationHistory, RuntimeController runtimeController) {
-        this.frameQueue = frameQueue;
-        this.generationHistory = generationHistory;
-        this.runtimeController = runtimeController;
+    Life(GenerationQueue generationQueue, GenerationHistory generationHistory, ApplicationContext context) {
+        this.wasCycleDiscovered = generationHistory.getWasCycleDiscovered();
+        this.generationQueue = generationQueue;
+        this.context = context;
         this.random = new Random();
+
         this.currentCells = new boolean[ROWS * COLUMNS];
         this.nextCells = new boolean[ROWS * COLUMNS];
         this.tempCells = new boolean[ROWS * COLUMNS];
-        this.currentBuffer = new byte[BYTES_PER_PIXEL * COLUMNS * SCALING_FACTOR * ROWS * SCALING_FACTOR];
-        this.nextBuffer = new byte[BYTES_PER_PIXEL * COLUMNS * SCALING_FACTOR * ROWS * SCALING_FACTOR];
-        this.tempBuffer = new byte[BYTES_PER_PIXEL * COLUMNS * SCALING_FACTOR * ROWS * SCALING_FACTOR];
+
         this.deadCellStates = new boolean[9];
         this.liveCellStates = new boolean[9];
-        liveColorProperty = runtimeController.colorProperty();
-        liveColorProperty.addListener((observableValue, oldValue, newValue) -> isColorChanged = true);
     }
 
     @PostConstruct
     public void initialize() {
         setRandomSeed();
+        setRules();
+        buildIndexTranslationArrays();
 
         for (int index = 0; index < ROWS * COLUMNS; index++) {
             currentCells[index] = random.nextInt(100) < INITIAL_POPULATION_PERCENT;
         }
 
-        populateBufferFromCells(currentCells, currentBuffer);
-        frameQueue.publishToQueue(currentBuffer);
-
-        setRules();
-        buildIndexTranslationArrays();
-
-        updateColor();
+        generationQueue.publish(currentCells);
+        letThereBeLight();
     }
 
     public void iterateCells() {
@@ -144,74 +118,25 @@ public class Life {
         }
     }
 
-    public void populateBufferFromCells(boolean [] cells, byte[] buffer) {
-        byte[] cellColorChunk;
-        byte[] rowChunk = new byte[COLUMNS * SCALING_FACTOR * BYTES_PER_PIXEL];
-
-        int bufferPosition = 0;
-        int bufferIncrement = COLUMNS * SCALING_FACTOR * BYTES_PER_PIXEL;
-
-        for (int rowIndex = 0; rowIndex < ROWS; rowIndex++) {
-            for (int columnIndex = 0; columnIndex < COLUMNS; columnIndex++) {
-                if (cells[COLUMNS * rowIndex + columnIndex]) {
-                    cellColorChunk = LIVE_COLOR_CHUNK;
-                } else {
-                    cellColorChunk = DEAD_COLOR_CHUNK;
-                }
-                System.arraycopy(cellColorChunk, 0, rowChunk, columnIndex * SCALING_FACTOR * BYTES_PER_PIXEL, cellColorChunk.length);
-            }
-            for (int scalingRepetitions = 0; scalingRepetitions < SCALING_FACTOR; scalingRepetitions++) {
-                System.arraycopy(rowChunk, 0, buffer, bufferPosition , rowChunk.length);
-                bufferPosition += bufferIncrement;
-            }
-        }
-    }
-
     private void cycleBuffers() {
         System.arraycopy(currentCells, 0, tempCells, 0, currentCells.length);
         System.arraycopy(nextCells, 0, currentCells, 0, nextCells.length);
         System.arraycopy(tempCells, 0, nextCells, 0, tempCells.length);
-        System.arraycopy(currentBuffer, 0, tempBuffer, 0, currentBuffer.length);
-        System.arraycopy(nextBuffer, 0, currentBuffer, 0, nextBuffer.length);
-        System.arraycopy(tempBuffer, 0, nextBuffer, 0, tempBuffer.length);
     }
 
-    @Scheduled(fixedDelay = TARGET_FRAME_INTERVAL, initialDelay = 1000)
+    @Scheduled(fixedRate = 1, initialDelay = 0)
     public void letThereBeLight() {
-        if (isColorChanged) {
-            updateColor();
-            isColorChanged = false;
-            populateBufferFromCells(currentCells, currentBuffer);
-            frameQueue.publishToQueue(currentBuffer);
-        }
-        if (!running) {
+        if(wasCycleDiscovered.get()) {
             return;
         }
-        if (frameQueue.getBufferedFrameCount() > TARGET_FRAME_RATE * 2) {
-            LOG.info("FrameBuffer is full.");
-            return;
-        }
-
-        iterateCells(); //4.3ms
-        populateBufferFromCells(nextCells, nextBuffer);
-        cycleBuffers();
-        frameQueue.publishToQueue(currentBuffer);
-        generationHistory.publishToQueue(currentCells);
-    }
-
-    public void updateColor() {
-        Color currentColor = liveColorProperty.getValue();
-        LIVE_COLOR[0] = (byte)(Math.floor(currentColor.getRed() * 255));
-        LIVE_COLOR[1] = (byte)(Math.floor(currentColor.getGreen() * 255));
-        LIVE_COLOR[2] = (byte)(Math.floor(currentColor.getBlue() * 255));
-        for (int scalingFactorRepitition = 0; scalingFactorRepitition < SCALING_FACTOR; scalingFactorRepitition++) {
-            System.arraycopy(LIVE_COLOR, 0, LIVE_COLOR_CHUNK, scalingFactorRepitition * BYTES_PER_PIXEL, LIVE_COLOR.length);
-            System.arraycopy(DEAD_COLOR, 0, DEAD_COLOR_CHUNK, scalingFactorRepitition * BYTES_PER_PIXEL, DEAD_COLOR.length);
-        }
+            iterateCells(); //4.3ms
+            cycleBuffers();
+            generationQueue.publish(currentCells);
     }
 
     public void setRandomSeed() {
-        setSeed(random.nextLong());
+        //setSeed(random.nextLong());
+        setSeed(-6632161742581681972L);
         //setSeed(5787729581658046463L);
         //6639619142342545916 use with 80% for stable flower
         //-3640157045244410566
@@ -307,15 +232,5 @@ public class Life {
             indicesNorthWest[i] = indicesNorth[i];
             indicesNorthWest[i] += indicesWest[i];
         }
-    }
-
-    @EventListener
-    public void start(StartRunEvent event) {
-        running = true;
-    }
-
-    @EventListener
-    public void stop(StopRunEvent event) {
-        running = false;
     }
 }

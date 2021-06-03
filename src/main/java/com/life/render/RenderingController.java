@@ -25,7 +25,6 @@ public class RenderingController {
     private static final int ROWS = IterationSettings.ROWS;
     private static final int BYTES_PER_PIXEL = IterationSettings.BYTES_PER_PIXEL;
     private static final int SCALING_FACTOR = IterationSettings.SCALING_FACTOR;
-    private static final long TARGET_FRAME_INTERVAL = IterationSettings.TARGET_FRAME_INTERVAL;
 
     private final FrameQueue frameQueue;
 
@@ -56,7 +55,7 @@ public class RenderingController {
         stage.show();
     }
 
-    @Scheduled(fixedRate = TARGET_FRAME_INTERVAL, initialDelay = 1000)
+    @Scheduled(fixedRate = 5, initialDelay = 10000)
     public void renderFrame() {
         pixelWriter.setPixels(0, 0, COLUMNS * SCALING_FACTOR, ROWS * SCALING_FACTOR,
                 pixelFormat, frameQueue.getNextFrame(), 0, COLUMNS * BYTES_PER_PIXEL * SCALING_FACTOR);
