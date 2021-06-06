@@ -1,7 +1,11 @@
-package com.life.render;
+package com.life.utility;
 
+import com.life.pipeline.RenderingControllerQueue;
+import javafx.application.Platform;
+import javafx.scene.image.ImageView;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -10,33 +14,31 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @Component
 public class FrameTimer {
+
     private final AtomicInteger frames;
-    private final AtomicInteger underruns;
     private final static Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
     private boolean wasCycleDiscovered;
 
-    public FrameTimer() {
-        frames = new AtomicInteger(0);
-        underruns = new AtomicInteger(0);
-        wasCycleDiscovered = false;
+    private final ImageView imageView;
+
+    public FrameTimer(RenderingControllerQueue renderingControllerQueue) {
+        this.frames = new AtomicInteger(0);
+        this.wasCycleDiscovered = false;
+        this.imageView = renderingControllerQueue.getImageView();
     }
 
+    @Async
     public void tick() {
         frames.set(frames.get() + 1);
-    }
-
-    public void tock() {
-        underruns.set(underruns.get() + 1);
-    }
-
-    public void setWasCycleDiscovered() {
-        wasCycleDiscovered = true;
+        if (!imageView.isFocused()) {
+            Platform.runLater(imageView::requestFocus);
+        }
     }
 
     @Scheduled(fixedRate = 1000)
     public void logFramesPerSecond() {
         if (!wasCycleDiscovered) {
-            LOG.info("FPS/UPS: " + frames.getAndSet(0) + " " + underruns.get());
+            LOG.info("FPS: " + frames.getAndSet(0));
         }
     }
 }

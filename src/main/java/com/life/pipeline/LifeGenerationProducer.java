@@ -1,26 +1,22 @@
-package com.life.generate;
+package com.life.pipeline;
 
 import com.life.configuration.IterationSettings;
-import com.life.event.StartRunEvent;
-import com.life.history.GenerationHistory;
+import com.life.contract.Pipeline;
+import com.life.executor.PipelineExecutor;
+import com.life.payload.Generation;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.event.EventListener;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
 import java.lang.invoke.MethodHandles;
 import java.util.Arrays;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.life.configuration.IterationSettings.TARGET_FRAME_INTERVAL;
-import static com.life.configuration.IterationSettings.TARGET_FRAME_RATE;
-
 @Component
-public class Life {
+public class LifeGenerationProducer implements Pipeline {
 
     private final Random random;
 
@@ -41,44 +37,62 @@ public class Life {
 
     private final boolean[] currentCells;
     private final boolean[] nextCells;
-    private final boolean[] tempCells;
 
     private final boolean[] deadCellStates;
     private final boolean[] liveCellStates;
 
-    private final AtomicBoolean wasCycleDiscovered;
+    private final Runnable action;
+    private final AtomicBoolean stop;
+    private final StringProperty actionNameProperty;
 
-    private final ApplicationContext context;
-    private final GenerationQueue generationQueue;
+    private final GenerationProcessingQueue generationProcessingQueue;
 
+    private static final String ACTION_NAME_PROPERTY_STRING = "Produce Generations";
     private final static Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-    Life(GenerationQueue generationQueue, GenerationHistory generationHistory, ApplicationContext context) {
-        this.wasCycleDiscovered = generationHistory.getWasCycleDiscovered();
-        this.generationQueue = generationQueue;
-        this.context = context;
+    LifeGenerationProducer(GenerationProcessingQueue generationProcessingQueue, PipelineExecutor pipelineExecutor) {
+
+        this.generationProcessingQueue = generationProcessingQueue;
         this.random = new Random();
 
         this.currentCells = new boolean[ROWS * COLUMNS];
         this.nextCells = new boolean[ROWS * COLUMNS];
-        this.tempCells = new boolean[ROWS * COLUMNS];
 
         this.deadCellStates = new boolean[9];
         this.liveCellStates = new boolean[9];
-    }
 
-    @PostConstruct
-    public void initialize() {
-        setRandomSeed();
-        setRules();
         buildIndexTranslationArrays();
 
+        this.action = this::produceLifeGenerations;
+        this.actionNameProperty = new SimpleStringProperty(ACTION_NAME_PROPERTY_STRING);
+        this.stop = pipelineExecutor.getStop();
+        pipelineExecutor.registerAndRun(this);
+    }
+
+    public void produceLifeGenerations() {
+        resetTransientState();
+        while (!stop.get()) {
+            iterateCells();
+            System.arraycopy(nextCells, 0, currentCells, 0, nextCells.length);
+            try {
+                generationProcessingQueue.put(new Generation(currentCells));
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void resetTransientState() {
+        setRandomSeed();
+        setRules();
         for (int index = 0; index < ROWS * COLUMNS; index++) {
             currentCells[index] = random.nextInt(100) < INITIAL_POPULATION_PERCENT;
         }
-
-        generationQueue.publish(currentCells);
-        letThereBeLight();
+        try {
+            generationProcessingQueue.put(new Generation(currentCells));
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     public void iterateCells() {
@@ -118,25 +132,10 @@ public class Life {
         }
     }
 
-    private void cycleBuffers() {
-        System.arraycopy(currentCells, 0, tempCells, 0, currentCells.length);
-        System.arraycopy(nextCells, 0, currentCells, 0, nextCells.length);
-        System.arraycopy(tempCells, 0, nextCells, 0, tempCells.length);
-    }
-
-    @Scheduled(fixedRate = 1, initialDelay = 0)
-    public void letThereBeLight() {
-        if(wasCycleDiscovered.get()) {
-            return;
-        }
-            iterateCells(); //4.3ms
-            cycleBuffers();
-            generationQueue.publish(currentCells);
-    }
-
     public void setRandomSeed() {
-        //setSeed(random.nextLong());
-        setSeed(-6632161742581681972L);
+        setSeed(random.nextLong());
+        //-7374350501714555895 1000 X 500 X 2 40%
+        //setSeed(2170333811995834095L);
         //setSeed(5787729581658046463L);
         //6639619142342545916 use with 80% for stable flower
         //-3640157045244410566
@@ -232,5 +231,15 @@ public class Life {
             indicesNorthWest[i] = indicesNorth[i];
             indicesNorthWest[i] += indicesWest[i];
         }
+    }
+
+    @Override
+    public Runnable getTask() {
+        return action;
+    }
+
+    @Override
+    public StringProperty actionNameProperty() {
+        return actionNameProperty;
     }
 }

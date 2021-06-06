@@ -52,8 +52,8 @@ public class RuntimeController {
     public void initialize(RuntimeStageReadyEvent event) {
         stage = event.getStage();
         context.publishEvent(new RenderingStageReadyEvent(new Stage()));
-        startButton.setOnAction(actionEvent -> go(actionEvent));
-        stopButton.setOnAction(actionEvent -> stop(actionEvent));
+        startButton.setOnAction(this::go);
+        stopButton.setOnAction(this::stop);
         colorPicker.getStyleClass().add("button");
         colorPicker.setMaxWidth(29.0);
         HBox hBox = new HBox();
@@ -63,7 +63,7 @@ public class RuntimeController {
         hBox.getChildren().add(colorPicker);
         Scene scene = new Scene(hBox);
         stage.setScene(scene);
-        stage.show();
+        //stage.show();
     }
 
     private void go(ActionEvent event) {
