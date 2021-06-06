@@ -23,7 +23,6 @@ public class GenerationCompressionBidiMap {
 
     public GenerationCompressionBidiMap() {
         this.compressionMap = buildCompressionMap();
-        testMapValues(compressionMap);
     }
 
     private static BidiMap<ByteChunk, BooleanArrayChunk> buildCompressionMap() {
@@ -35,21 +34,6 @@ public class GenerationCompressionBidiMap {
         }
         LOG.info("Compression map completed.");
         return compressionMap;
-    }
-
-    private static void testMapValues(BidiMap<ByteChunk, BooleanArrayChunk> compressionMap) {
-        List<BooleanArrayChunk> booleanArrayChunks = new ArrayList<>();
-        ByteChunk byteChunk;
-        BooleanArrayChunk booleanArrayChunk;
-        for (int index = 0; index <= MAX_UNSIGNED_BYTE_VALUE; index++) {
-            byteChunk = new ByteChunk((byte)(index - 128));
-            booleanArrayChunk = compressionMap.get(byteChunk);
-            booleanArrayChunks.add(booleanArrayChunk);
-            LOG.info("ByteChunk value is " + byteChunk.value + ". Boolean array value is " + booleanArrayChunk.toString() + ".");
-        }
-        for (BooleanArrayChunk booleanArrayChunk1 : booleanArrayChunks) {
-            LOG.info("Boolean array value is " + booleanArrayChunk1.toString() + ". ByteChunk value is " + compressionMap.getKey(booleanArrayChunk1).value + ".");
-        }
     }
 
     public PackedGeneration pack(Generation generation) {
