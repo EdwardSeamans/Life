@@ -4,6 +4,7 @@ import com.life.contract.Pipeline;
 import com.life.executor.PipelineExecutor;
 import com.life.payload.Generation;
 import com.life.utility.GenerationHistory;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import org.slf4j.Logger;
@@ -25,6 +26,8 @@ public class GenerationProcessingQueue extends SynchronousQueue<Generation> impl
     private final AtomicBoolean stop;
     private final StringProperty actionNameProperty;
 
+    private final StringProperty cycleInformationProperty;
+
     private static final String ACTION_NAME_PROPERTY_STRING = "Process Generations";
     private static final Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
@@ -34,6 +37,7 @@ public class GenerationProcessingQueue extends SynchronousQueue<Generation> impl
         this.frameProducingQueue = frameProducingQueue;
         this.action = this::processGenerations;
         this.actionNameProperty = new SimpleStringProperty(ACTION_NAME_PROPERTY_STRING);
+        this.cycleInformationProperty = new SimpleStringProperty("  Period: No cycle detected.");
         this.stop = pipelineExecutor.getStop();
         pipelineExecutor.registerAndRun(this);
     }
@@ -64,7 +68,7 @@ public class GenerationProcessingQueue extends SynchronousQueue<Generation> impl
 
     private void cycle(int cycleStartIndex) {
         int cycleEndIndex = generationHistory.getLastIndex();
-        logCycleInformation(cycleStartIndex, cycleEndIndex);
+        Platform.runLater(() -> logCycleInformation(cycleStartIndex, cycleEndIndex));
 
         while (!stop.get()) {
             for (int index = cycleStartIndex; index <= cycleEndIndex; index++) {
@@ -77,12 +81,12 @@ public class GenerationProcessingQueue extends SynchronousQueue<Generation> impl
         }
     }
 
+    public StringProperty cycleInformationProperty() {
+        return cycleInformationProperty;
+    }
+
     public void logCycleInformation(int cycleStartIndex, int cycleEndIndex) {
-        LOG.info("Cycle detected from generation " + cycleStartIndex + " to generation " + cycleEndIndex + ".");
-        LOG.info("The cycle period was " + (cycleEndIndex - cycleStartIndex) + " generations.");
-        Runtime runtime = Runtime.getRuntime();
-        LOG.info("Total: " + runtime.totalMemory() + " Max: " + runtime.maxMemory() + " Free: " + runtime.freeMemory()+ " Processors: " + runtime.availableProcessors() + " History: " + generationHistory.size());
-        LOG.info("Total: " + runtime.totalMemory() + " Max: " + runtime.maxMemory() + " Free: " + runtime.freeMemory()+ " Processors: " + runtime.availableProcessors() + " History: " + generationHistory.size());
+        cycleInformationProperty.set("  Period: " + (cycleEndIndex - cycleStartIndex + 1) + " generations, (" + cycleStartIndex + "-" + cycleEndIndex + ")");
     }
 
     @Override

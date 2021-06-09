@@ -31,9 +31,10 @@ public class FrameProducingQueue extends SynchronousQueue<Generation> implements
 
     private final RenderingControllerQueue renderingControllerQueue;
     private final FrameTimer frameTimer;
+    private final PipelineExecutor pipelineExecutor;
 
-    private final RgbConvertedColor deadRgbConvertedColor;
-    private final RgbConvertedColor liveRgbConvertedColor;
+    private RgbConvertedColor deadRgbConvertedColor;
+    private RgbConvertedColor liveRgbConvertedColor;
 
     private final byte[] liveRgbColor;
     private final byte[] deadRgbColor;
@@ -43,18 +44,16 @@ public class FrameProducingQueue extends SynchronousQueue<Generation> implements
     private static final String ACTION_NAME_PROPERTY_STRING = "Produce Frames";
     private static final Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-    public FrameProducingQueue(RenderingControllerQueue renderingControllerQueue, FrameTimer frameTimer, PipelineExecutor pipelineExecutor, RuntimeController runtimeController) {
+    public FrameProducingQueue(RenderingControllerQueue renderingControllerQueue, FrameTimer frameTimer, PipelineExecutor pipelineExecutor) {
         super(true);
         this.renderingControllerQueue = renderingControllerQueue;
         this.frameTimer = frameTimer;
         this.action = this::produceFrames;
         this.actionNameProperty = new SimpleStringProperty(ACTION_NAME_PROPERTY_STRING);
         this.stop = pipelineExecutor.getStop();
-        this.deadRgbConvertedColor = runtimeController.getDeadCellRgbConvertedColor();
-        this.liveRgbConvertedColor = runtimeController.getLiveCellRgbConvertedColor();
         this.deadRgbColor = new byte[3];
         this.liveRgbColor = new byte[3];
-        pipelineExecutor.registerAndRun(this);
+        this.pipelineExecutor = pipelineExecutor;
     }
 
     public void produceFrames() {
@@ -110,6 +109,12 @@ public class FrameProducingQueue extends SynchronousQueue<Generation> implements
                 e.printStackTrace();
             }
         }
+    }
+
+    public void initializeAndLaunch(RgbConvertedColor deadRgbConvertedColor, RgbConvertedColor liveRgbConvertedColor) {
+        this.deadRgbConvertedColor = deadRgbConvertedColor;
+        this.liveRgbConvertedColor = liveRgbConvertedColor;
+        pipelineExecutor.registerAndRun(this);
     }
 
     @Override
