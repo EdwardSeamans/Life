@@ -1,11 +1,11 @@
 package com.life.fxcontroller;
 
+import com.life.color.RgbConvertedColor;
 import com.life.configuration.IterationSettings;
 import com.life.event.RenderingStageReadyEvent;
 import com.life.event.RuntimeStageReadyEvent;
 import com.life.event.StartRunEvent;
 import com.life.event.StopRunEvent;
-import javafx.beans.property.ObjectProperty;
 import javafx.event.ActionEvent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -13,6 +13,7 @@ import javafx.scene.control.ColorPicker;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
@@ -28,7 +29,11 @@ public class RuntimeController {
     private Stage stage;
     private Button startButton;
     private Button stopButton;
-    private ColorPicker colorPicker;
+    private ColorPicker liveColorPicker;
+    private ColorPicker deadColorPicker;
+
+    private final RgbConvertedColor deadCellRgbConvertedColor;
+    private final RgbConvertedColor liveCellRgbConvertedColor;
 
     ConfigurationController configurationController;
 
@@ -45,25 +50,33 @@ public class RuntimeController {
         this.configurationController = configurationController;
         this.startButton = new Button("Start");
         this.stopButton = new Button("Stop");
-        this.colorPicker = new ColorPicker();
+        this.liveColorPicker = new ColorPicker(Color.BLACK);
+        this.liveCellRgbConvertedColor = new RgbConvertedColor(liveColorPicker.getValue());
+        this.deadColorPicker = new ColorPicker(Color.WHITE);
+        this.deadCellRgbConvertedColor = new RgbConvertedColor(deadColorPicker.getValue());
     }
 
     @EventListener
     public void initialize(RuntimeStageReadyEvent event) {
         stage = event.getStage();
-        context.publishEvent(new RenderingStageReadyEvent(new Stage()));
+        context.publishEvent(new RenderingStageReadyEvent(new Stage(StageStyle.UNDECORATED)));
         startButton.setOnAction(this::go);
         stopButton.setOnAction(this::stop);
-        colorPicker.getStyleClass().add("button");
-        colorPicker.setMaxWidth(29.0);
+        liveColorPicker.getStyleClass().add("button");
+        liveColorPicker.setMaxWidth(29.0);
+        liveColorPicker.valueProperty().addListener((observableValue, oldValue, newValue) -> liveCellRgbConvertedColor.update(newValue));
+        deadColorPicker.getStyleClass().add("button");
+        deadColorPicker.setMaxWidth(29.0);
+        deadColorPicker.valueProperty().addListener((observableValue, oldValue, newValue) -> deadCellRgbConvertedColor.update(newValue));
         HBox hBox = new HBox();
         hBox.setMinSize(200.0, 200.0);
         hBox.getChildren().add(startButton);
         hBox.getChildren().add(stopButton);
-        hBox.getChildren().add(colorPicker);
+        hBox.getChildren().add(liveColorPicker);
+        hBox.getChildren().add(deadColorPicker);
         Scene scene = new Scene(hBox);
         stage.setScene(scene);
-        //stage.show();
+        stage.show();
     }
 
     private void go(ActionEvent event) {
@@ -74,8 +87,12 @@ public class RuntimeController {
         context.publishEvent(new StopRunEvent());
     }
 
-    public ObjectProperty<Color> colorProperty() {
-        return colorPicker.valueProperty();
+    public RgbConvertedColor getDeadCellRgbConvertedColor() {
+        return deadCellRgbConvertedColor;
+    }
+
+    public RgbConvertedColor getLiveCellRgbConvertedColor() {
+        return liveCellRgbConvertedColor;
     }
 }
 

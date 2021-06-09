@@ -1,6 +1,8 @@
 package com.life.pipeline;
 
+import com.life.color.RgbConvertedColor;
 import com.life.contract.Pipeline;
+import com.life.fxcontroller.RuntimeController;
 import com.life.payload.Generation;
 import com.life.payload.Frame;
 import com.life.executor.PipelineExecutor;
@@ -15,10 +17,8 @@ import java.lang.invoke.MethodHandles;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.life.configuration.IterationSettings.BLACK;
 import static com.life.configuration.IterationSettings.BYTES_PER_PIXEL;
 import static com.life.configuration.IterationSettings.COLUMNS;
-import static com.life.configuration.IterationSettings.GREEN;
 import static com.life.configuration.IterationSettings.ROWS;
 import static com.life.configuration.IterationSettings.SCALING_FACTOR;
 
@@ -32,25 +32,28 @@ public class FrameProducingQueue extends SynchronousQueue<Generation> implements
     private final RenderingControllerQueue renderingControllerQueue;
     private final FrameTimer frameTimer;
 
-    private static final byte[] LIVE_COLOR = GREEN;
-    private static final byte[] DEAD_COLOR = BLACK;
+    private final RgbConvertedColor deadRgbConvertedColor;
+    private final RgbConvertedColor liveRgbConvertedColor;
+
+    private final byte[] liveRgbColor;
+    private final byte[] deadRgbColor;
     private final byte[] LIVE_COLOR_CHUNK = new byte[BYTES_PER_PIXEL * SCALING_FACTOR];
     private final byte[] DEAD_COLOR_CHUNK = new byte[BYTES_PER_PIXEL * SCALING_FACTOR];
 
     private static final String ACTION_NAME_PROPERTY_STRING = "Produce Frames";
     private static final Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-    public FrameProducingQueue(RenderingControllerQueue renderingControllerQueue, FrameTimer frameTimer, PipelineExecutor pipelineExecutor) {
+    public FrameProducingQueue(RenderingControllerQueue renderingControllerQueue, FrameTimer frameTimer, PipelineExecutor pipelineExecutor, RuntimeController runtimeController) {
         super(true);
         this.renderingControllerQueue = renderingControllerQueue;
         this.frameTimer = frameTimer;
-        for (int scalingFactorRepetition = 0; scalingFactorRepetition < SCALING_FACTOR; scalingFactorRepetition++) {
-            System.arraycopy(LIVE_COLOR, 0, LIVE_COLOR_CHUNK, scalingFactorRepetition * BYTES_PER_PIXEL, LIVE_COLOR.length);
-            System.arraycopy(DEAD_COLOR, 0, DEAD_COLOR_CHUNK, scalingFactorRepetition * BYTES_PER_PIXEL, DEAD_COLOR.length);
-        }
         this.action = this::produceFrames;
         this.actionNameProperty = new SimpleStringProperty(ACTION_NAME_PROPERTY_STRING);
         this.stop = pipelineExecutor.getStop();
+        this.deadRgbConvertedColor = runtimeController.getDeadCellRgbConvertedColor();
+        this.liveRgbConvertedColor = runtimeController.getLiveCellRgbConvertedColor();
+        this.deadRgbColor = new byte[3];
+        this.liveRgbColor = new byte[3];
         pipelineExecutor.registerAndRun(this);
     }
 
@@ -64,6 +67,18 @@ public class FrameProducingQueue extends SynchronousQueue<Generation> implements
         int bufferIncrement = COLUMNS * SCALING_FACTOR * BYTES_PER_PIXEL;
 
         while (!stop.get()) {
+            if (deadRgbConvertedColor.valueChanged) {
+                System.arraycopy(deadRgbConvertedColor.getColorChunk(), 0, deadRgbColor, 0, deadRgbColor.length);
+                for (int scalingFactorRepetition = 0; scalingFactorRepetition < SCALING_FACTOR; scalingFactorRepetition++) {
+                    System.arraycopy(deadRgbColor, 0, DEAD_COLOR_CHUNK, scalingFactorRepetition * BYTES_PER_PIXEL, deadRgbColor.length);
+                }
+            }
+            if (liveRgbConvertedColor.valueChanged) {
+                System.arraycopy(liveRgbConvertedColor.getColorChunk(), 0, liveRgbColor, 0, liveRgbColor.length);
+                for (int scalingFactorRepetition = 0; scalingFactorRepetition < SCALING_FACTOR; scalingFactorRepetition++) {
+                    System.arraycopy(liveRgbColor, 0, LIVE_COLOR_CHUNK, scalingFactorRepetition * BYTES_PER_PIXEL, liveRgbColor.length);
+                }
+            }
             try {
                 generation = take();
             } catch (InterruptedException e) {
