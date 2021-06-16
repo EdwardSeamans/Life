@@ -1,8 +1,8 @@
 package com.life.pipeline;
 
 import com.life.color.RgbConvertedColor;
+import com.life.configuration.IterationSettings;
 import com.life.contract.Pipeline;
-import com.life.fxcontroller.RuntimeController;
 import com.life.payload.Generation;
 import com.life.payload.Frame;
 import com.life.executor.PipelineExecutor;
@@ -103,7 +103,10 @@ public class FrameProducingQueue extends SynchronousQueue<Generation> implements
                 }
             }
             try {
-                renderingControllerQueue.put(new Frame(buffer));
+                Frame referenceFrame = new Frame(buffer);
+                for (int speedDivisor = 0; speedDivisor < IterationSettings.SPEED_DIVISOR; speedDivisor++) {
+                    renderingControllerQueue.put(referenceFrame);
+                }
                 frameTimer.tick();
             } catch (InterruptedException e) {
                 e.printStackTrace();

@@ -17,6 +17,7 @@ public class IterationSettings {
     public static final long MILLISECONDS_PER_SECOND = 1000L;
     public static final int BYTES_PER_PIXEL = 3;                //Current rendering uses three-byte color, constant
     public static final long TARGET_FRAME_INTERVAL = MILLISECONDS_PER_SECOND/TARGET_FRAME_RATE;
+    public static final int SPEED_DIVISOR = 1;
 }
 
 //TODO: Interface for settings

@@ -1,4 +1,5 @@
 package com.life.fxplatform;
+
 import com.life.LifeSpringBootApplication;
 import com.life.event.RuntimeStageReadyEvent;
 import javafx.application.Application;
