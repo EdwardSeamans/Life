@@ -7,12 +7,12 @@ import com.life.executor.PipelineExecutor;
 import com.life.payload.Frame;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.PixelFormat;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
-import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,7 +59,8 @@ public class RenderingControllerQueue extends SynchronousQueue<Frame> implements
     @EventListener
     public void initialize(RenderingStageReadyEvent renderingStageReadyEvent) {
         LOG.info("LifeFx Thread:" + Thread.currentThread().getName());
-        AnchorPane root = new AnchorPane(imageView);
+        //AnchorPane root = new AnchorPane(imageView);
+        Group root = new Group(imageView);
         Scene scene = new Scene(root, COLUMNS * SCALING_FACTOR, ROWS * SCALING_FACTOR);
         Stage stage = renderingStageReadyEvent.getStage();
         stage.setScene(scene);

@@ -28,6 +28,12 @@ public class LifeFXApplication extends Application {
     public void start(Stage stage) {
         Thread.currentThread().setName("JavaFX-Thread");
         LOG.info("Starting FX Application on " + Thread.currentThread().getName());
+//        Platform.runLater(() -> Thread.currentThread().setUncaughtExceptionHandler((t, e) -> {
+//            ApplicationContext context = applicationContext;
+//            e.printStackTrace();
+//            context.publishEvent(new ScenePulseListenerCrashEvent());
+            // attempt recovery here
+//        }));
         applicationContext.publishEvent(new RuntimeStageReadyEvent(stage));
     }
 
