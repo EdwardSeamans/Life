@@ -68,9 +68,9 @@ public class RuntimeController {
         this.frameProducingQueue = frameProducingQueue;
         this.startButton = new Button("Start");
         this.stopButton = new Button("Stop");
-        this.liveColorPicker = new ColorPicker(Color.BLACK);
+        this.liveColorPicker = new ColorPicker(Color.LIMEGREEN);
         this.liveCellRgbConvertedColor = new RgbConvertedColor(liveColorPicker.getValue());
-        this.deadColorPicker = new ColorPicker(Color.WHITE);
+        this.deadColorPicker = new ColorPicker(Color.BLACK);
         this.deadCellRgbConvertedColor = new RgbConvertedColor(deadColorPicker.getValue());
         this.frameProducingQueue.initializeAndLaunch(deadCellRgbConvertedColor, liveCellRgbConvertedColor);
         this.framesPerSecondLabel = new Label();
