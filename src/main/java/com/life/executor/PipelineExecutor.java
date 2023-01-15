@@ -17,12 +17,14 @@ public class PipelineExecutor extends ThreadPoolExecutor {
     private final AtomicBoolean stop;
 
     private static final int WORKERS = 4;
+
+    private static final int MAX_WORKERS = 4;
     private static final long IMMORTAL = Long.MAX_VALUE;
 
     private final static Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
     public PipelineExecutor() {
-        super(4, WORKERS, IMMORTAL, TimeUnit.DAYS, new ArrayBlockingQueue<>(WORKERS, true));
+        super(WORKERS, MAX_WORKERS, IMMORTAL, TimeUnit.DAYS, new ArrayBlockingQueue<>(WORKERS, true));
         this.stop = new AtomicBoolean();
         prestartAllCoreThreads();
         LOG.info("PipelineExecutor started. Available workers: " + getPoolSize());
