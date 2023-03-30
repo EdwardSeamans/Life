@@ -58,7 +58,7 @@ public class RenderingControllerQueue extends SynchronousQueue<Frame> implements
 
     @EventListener
     public void initialize(RenderingStageReadyEvent renderingStageReadyEvent) {
-        LOG.info("LifeFx Thread:" + Thread.currentThread().getName());
+        LOG.info("LifeFx Thread: " + Thread.currentThread().getName());
         AnchorPane root = new AnchorPane(imageView);
         Scene scene = new Scene(root, COLUMNS * SCALING_FACTOR, ROWS * SCALING_FACTOR);
         Stage stage = renderingStageReadyEvent.getStage();
