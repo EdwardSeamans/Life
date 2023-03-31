@@ -35,7 +35,7 @@ public class RuntimeController {
     private final Button pauseButton;
     private final ColorPicker liveColorPicker;
     private final ColorPicker deadColorPicker;
-
+    private Stage stage;
     private final Label framesPerSecondLabel;
     private final Label cycleInformationLabel;
     private final RgbConvertedColor deadCellRgbConvertedColor;
@@ -63,7 +63,7 @@ public class RuntimeController {
 
     @EventListener
     public void initialize(RuntimeStageReadyEvent event) {
-        Stage stage = event.getStage();
+        this.stage = event.getStage();
         Thread.currentThread().setUncaughtExceptionHandler(event.getFxUncaughtExceptionHandler());
         stage.setTitle("Life");
         File file;
@@ -103,6 +103,10 @@ public class RuntimeController {
         } else {
             pauseButton.textProperty().set("⏸");
         }
+    }
+
+    public Stage getStage() {
+        return this.stage;
     }
 }
 

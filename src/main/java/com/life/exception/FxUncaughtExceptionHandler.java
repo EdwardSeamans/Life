@@ -1,6 +1,7 @@
 package com.life.exception;
 
 import com.life.executor.PipelineExecutor;
+import com.life.fxcontroller.RuntimeController;
 import com.life.pipeline.RenderingControllerQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +24,7 @@ public class FxUncaughtExceptionHandler implements UncaughtExceptionHandler {
     public void uncaughtException(Thread t, Throwable e) {
         PipelineExecutor pipelineExecutor = context.getBean(PipelineExecutor.class);
         pipelineExecutor.isPaused().set(true);
-        context.getBean(RenderingControllerQueue.class).recoverFromQuantumToolkitError();
+        context.getBean(RenderingControllerQueue.class).recoverFromQuantumToolkitError(context.getBean(RuntimeController.class).getStage());
         pipelineExecutor.isPaused().set(false);
         LOG.error("FX Encountered an internal exception!");
         LOG.error(e.getMessage());

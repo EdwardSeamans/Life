@@ -82,10 +82,11 @@ public class RenderingControllerQueue extends SynchronousQueue<Frame> implements
         }
     }
 
-    public void recoverFromQuantumToolkitError() {
+    public void recoverFromQuantumToolkitError(Stage runtimeComtrollerStage) {
         AnchorPane root = new AnchorPane(imageView);
         Scene scene = new Scene(root, COLUMNS * SCALING_FACTOR, ROWS * SCALING_FACTOR);
         stage.setScene(scene);
+        runtimeComtrollerStage.toFront();
     }
 
     @Override
