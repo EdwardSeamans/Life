@@ -2,6 +2,7 @@ package com.life.fxplatform;
 
 import com.life.LifeSpringBootApplication;
 import com.life.event.RuntimeStageReadyEvent;
+import com.life.exception.FxUncaughtExceptionHandler;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.stage.Stage;
@@ -28,7 +29,7 @@ public class LifeFXApplication extends Application {
     public void start(Stage stage) {
         Thread.currentThread().setName("JavaFX-Thread");
         LOG.info("Starting FX Application on " + Thread.currentThread().getName());
-        context.publishEvent(new RuntimeStageReadyEvent(stage));
+        context.publishEvent(new RuntimeStageReadyEvent(stage, context.getBean(FxUncaughtExceptionHandler.class)));
     }
 
     @Override

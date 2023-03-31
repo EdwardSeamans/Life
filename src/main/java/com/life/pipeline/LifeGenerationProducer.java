@@ -136,7 +136,7 @@ public class LifeGenerationProducer implements Pipeline {
     }
 
     public void setRandomSeed() {
-        setSeed(random.nextLong());
+        setSeed(-3640157045244410566L);
         //random.nextLong()
         //-7374350501714555895 1000 X 500 X 2 40%
         //setSeed(1128755554682849221L);

@@ -36,7 +36,7 @@ public class RenderingControllerQueue extends SynchronousQueue<Frame> implements
     private final ImageView imageView;
     private final PixelWriter pixelWriter;
     private static final PixelFormat<ByteBuffer> pixelFormat = PixelFormat.getByteRgbInstance();
-
+    private Stage stage;
     private static final int COLUMNS = IterationSettings.COLUMNS;
     private static final int ROWS = IterationSettings.ROWS;
     private static final int BYTES_PER_PIXEL = IterationSettings.BYTES_PER_PIXEL;
@@ -61,7 +61,7 @@ public class RenderingControllerQueue extends SynchronousQueue<Frame> implements
         LOG.info("LifeFx Thread: " + Thread.currentThread().getName());
         AnchorPane root = new AnchorPane(imageView);
         Scene scene = new Scene(root, COLUMNS * SCALING_FACTOR, ROWS * SCALING_FACTOR);
-        Stage stage = renderingStageReadyEvent.getStage();
+        this.stage = renderingStageReadyEvent.getStage();
         stage.setScene(scene);
         stage.setResizable(false);
         stage.show();
@@ -80,6 +80,12 @@ public class RenderingControllerQueue extends SynchronousQueue<Frame> implements
                 e.printStackTrace();
             }
         }
+    }
+
+    public void recoverFromQuantumToolkitError() {
+        AnchorPane root = new AnchorPane(imageView);
+        Scene scene = new Scene(root, COLUMNS * SCALING_FACTOR, ROWS * SCALING_FACTOR);
+        stage.setScene(scene);
     }
 
     @Override
