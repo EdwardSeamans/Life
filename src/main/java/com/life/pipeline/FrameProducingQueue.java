@@ -26,7 +26,7 @@ import static com.life.configuration.IterationSettings.SCALING_FACTOR;
 public class FrameProducingQueue extends SynchronousQueue<Generation> implements Pipeline {
 
     private final Runnable action;
-    private final AtomicBoolean pause;
+    private final AtomicBoolean isPaused;
     private final StringProperty actionNameProperty;
 
     private final RenderingControllerQueue renderingControllerQueue;
@@ -50,7 +50,7 @@ public class FrameProducingQueue extends SynchronousQueue<Generation> implements
         this.frameTimer = frameTimer;
         this.action = this::produceFrames;
         this.actionNameProperty = new SimpleStringProperty(ACTION_NAME_PROPERTY_STRING);
-        this.pause = pipelineExecutor.getPause();
+        this.isPaused = pipelineExecutor.isPaused();
         this.deadRgbColor = new byte[3];
         this.liveRgbColor = new byte[3];
         this.pipelineExecutor = pipelineExecutor;
@@ -65,7 +65,10 @@ public class FrameProducingQueue extends SynchronousQueue<Generation> implements
         int bufferPosition;
         int bufferIncrement = COLUMNS * SCALING_FACTOR * BYTES_PER_PIXEL;
 
-        while (!pause.get()) {
+        while (true) {
+            if (isPaused.get()) {
+                continue;
+            }
             if (deadRgbConvertedColor.valueChanged) {
                 System.arraycopy(deadRgbConvertedColor.getColorChunk(), 0, deadRgbColor, 0, deadRgbColor.length);
                 for (int scalingFactorRepetition = 0; scalingFactorRepetition < SCALING_FACTOR; scalingFactorRepetition++) {
@@ -82,7 +85,7 @@ public class FrameProducingQueue extends SynchronousQueue<Generation> implements
                 generation = take();
             } catch (InterruptedException e) {
                 LOG.error("The produceFrame thread was interrupted.", e);
-                pause.set(true);
+                isPaused.set(true);
                 return;
             }
             cells = generation.generationArray;

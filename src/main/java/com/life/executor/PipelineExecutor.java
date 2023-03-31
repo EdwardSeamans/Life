@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Component
 public class PipelineExecutor extends ThreadPoolExecutor {
 
-    private final AtomicBoolean pause;
+    private final AtomicBoolean isPaused;
 
     private static final int WORKERS = 4;
 
@@ -25,13 +25,13 @@ public class PipelineExecutor extends ThreadPoolExecutor {
 
     public PipelineExecutor() {
         super(WORKERS, MAX_WORKERS, IMMORTAL, TimeUnit.DAYS, new ArrayBlockingQueue<>(WORKERS, true));
-        this.pause = new AtomicBoolean();
+        this.isPaused = new AtomicBoolean();
         prestartAllCoreThreads();
         LOG.info("PipelineExecutor started. Available workers: " + getPoolSize());
     }
 
-    public AtomicBoolean getPause() {
-        return pause;
+    public AtomicBoolean isPaused() {
+        return isPaused;
     }
 
     public void registerAndRun(Pipeline pipelineComponent) {

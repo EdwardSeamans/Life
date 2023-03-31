@@ -42,7 +42,7 @@ public class LifeGenerationProducer implements Pipeline {
     private final boolean[] liveCellStates;
 
     private final Runnable action;
-    private final AtomicBoolean pause;
+    private final AtomicBoolean isPaused;
     private final StringProperty actionNameProperty;
 
     private final GenerationProcessingQueue generationProcessingQueue;
@@ -65,13 +65,16 @@ public class LifeGenerationProducer implements Pipeline {
 
         this.action = this::produceLifeGenerations;
         this.actionNameProperty = new SimpleStringProperty(ACTION_NAME_PROPERTY_STRING);
-        this.pause = pipelineExecutor.getPause();
+        this.isPaused = pipelineExecutor.isPaused();
         pipelineExecutor.registerAndRun(this);
     }
 
     public void produceLifeGenerations() {
-        resetTransientState();
-        while (!pause.get()) {
+        resetSimulation();
+        while (true) {
+            if (isPaused.get()) {
+                continue;
+            }
             iterateCells();
             System.arraycopy(nextCells, 0, currentCells, 0, nextCells.length);
             try {
@@ -82,7 +85,7 @@ public class LifeGenerationProducer implements Pipeline {
         }
     }
 
-    private void resetTransientState() {
+    private void resetSimulation() {
         setRandomSeed();
         setRules();
         for (int index = 0; index < ROWS * COLUMNS; index++) {

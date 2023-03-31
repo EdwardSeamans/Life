@@ -3,10 +3,10 @@ package com.life.fxcontroller;
 import com.life.color.RgbConvertedColor;
 import com.life.event.RenderingStageReadyEvent;
 import com.life.event.RuntimeStageReadyEvent;
+import com.life.executor.PipelineExecutor;
 import com.life.pipeline.FrameProducingQueue;
 import com.life.pipeline.GenerationProcessingQueue;
 import com.life.utility.FrameTimer;
-import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -27,11 +27,12 @@ import org.springframework.util.ResourceUtils;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.lang.invoke.MethodHandles;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Component
 public class RuntimeController {
-    private final Button startButton;
-    private final Button stopButton;
+
+    private final Button pauseButton;
     private final ColorPicker liveColorPicker;
     private final ColorPicker deadColorPicker;
 
@@ -51,8 +52,7 @@ public class RuntimeController {
         this.context = context;
         this.frameTimer = frameTimer;
         this.generationProcessingQueue = generationProcessingQueue;
-        this.startButton = new Button("Start");
-        this.stopButton = new Button("Stop");
+        this.pauseButton = new Button("⏸");
         this.liveColorPicker = new ColorPicker(Color.LIMEGREEN);
         this.liveCellRgbConvertedColor = new RgbConvertedColor(liveColorPicker.getValue());
         this.deadColorPicker = new ColorPicker(Color.BLACK);
@@ -75,8 +75,7 @@ public class RuntimeController {
             e.printStackTrace();
         }
         context.publishEvent(new RenderingStageReadyEvent(new Stage(StageStyle.UNDECORATED)));
-        startButton.setOnAction(this::go);
-        stopButton.setOnAction(this::stop);
+        pauseButton.setOnAction(this::pause);
         liveColorPicker.getStyleClass().add("button");
         liveColorPicker.setMaxWidth(29.0);
         liveColorPicker.valueProperty().addListener((observableValue, oldValue, newValue) -> liveCellRgbConvertedColor.update(newValue));
@@ -86,8 +85,7 @@ public class RuntimeController {
         this.framesPerSecondLabel.textProperty().bind(frameTimer.framesPerSecondProperty());
         this.cycleInformationLabel.textProperty().bind(generationProcessingQueue.cycleInformationProperty());
         FlowPane flowPane = new FlowPane();
-        flowPane.getChildren().add(startButton);
-        flowPane.getChildren().add(stopButton);
+        flowPane.getChildren().add(pauseButton);
         flowPane.getChildren().add(liveColorPicker);
         flowPane.getChildren().add(deadColorPicker);
         flowPane.getChildren().add(cycleInformationLabel);
@@ -97,13 +95,14 @@ public class RuntimeController {
         stage.show();
     }
 
-    private void go(ActionEvent event) {
-        LOG.info("Start Button Click");
-    }
-
-    private void stop(ActionEvent event) {
-        Platform.exit();
-        context.close();
+    private void pause(ActionEvent event) {
+        AtomicBoolean isPaused = context.getBean(PipelineExecutor.class).isPaused();
+        isPaused.set(!isPaused.get());
+        if (isPaused.get()) {
+            pauseButton.setText("⏵");
+        } else {
+            pauseButton.setText("⏸");
+        }
     }
 }
 
