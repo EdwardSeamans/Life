@@ -52,7 +52,7 @@ public class RuntimeController {
         this.context = context;
         this.frameTimer = frameTimer;
         this.generationProcessingQueue = generationProcessingQueue;
-        this.pauseButton = new Button("⏸");
+        this.pauseButton = new Button("⏵");
         this.liveColorPicker = new ColorPicker(Color.LIMEGREEN);
         this.liveCellRgbConvertedColor = new RgbConvertedColor(liveColorPicker.getValue());
         this.deadColorPicker = new ColorPicker(Color.BLACK);
@@ -99,9 +99,9 @@ public class RuntimeController {
         AtomicBoolean isPaused = context.getBean(PipelineExecutor.class).isPaused();
         isPaused.set(!isPaused.get());
         if (isPaused.get()) {
-            pauseButton.setText("⏵");
+            pauseButton.textProperty().set("⏵");
         } else {
-            pauseButton.setText("⏸");
+            pauseButton.textProperty().set("⏸");
         }
     }
 }

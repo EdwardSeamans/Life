@@ -19,8 +19,8 @@ public class FrameTimer {
 
     private final AtomicInteger frames;
     private final StringProperty framesPerSecondProperty;
-
     private final AtomicBoolean isPaused;
+    private boolean firstFrame = true;
 
     private final static Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
@@ -30,9 +30,12 @@ public class FrameTimer {
         this.framesPerSecondProperty = new SimpleStringProperty();
     }
 
-    @Async
     public void tick() {
         frames.set(frames.get() + 1);
+        if (firstFrame) {
+            firstFrame = false;
+            isPaused.set(true);
+        }
     }
 
     public StringProperty framesPerSecondProperty() {
