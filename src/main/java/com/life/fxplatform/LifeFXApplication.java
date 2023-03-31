@@ -14,26 +14,26 @@ import java.lang.invoke.MethodHandles;
 
 public class LifeFXApplication extends Application {
 
-    private ConfigurableApplicationContext applicationContext;
+    private ConfigurableApplicationContext context;
     private final static Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
     @Override
     public void init() {
         Thread.currentThread().setName("Boot");
         LOG.info("Invoking Boot Application in init() method on " + Thread.currentThread().getName());
-        applicationContext = new SpringApplicationBuilder(LifeSpringBootApplication.class).run();
+        context = new SpringApplicationBuilder(LifeSpringBootApplication.class).run();
     }
 
     @Override
     public void start(Stage stage) {
         Thread.currentThread().setName("JavaFX-Thread");
         LOG.info("Starting FX Application on " + Thread.currentThread().getName());
-        applicationContext.publishEvent(new RuntimeStageReadyEvent(stage));
+        context.publishEvent(new RuntimeStageReadyEvent(stage));
     }
 
     @Override
     public void stop() {
-        applicationContext.stop();
+        context.stop();
         Platform.exit();
     }
 }

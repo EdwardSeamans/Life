@@ -23,7 +23,7 @@ public class GenerationProcessingQueue extends SynchronousQueue<Generation> impl
     private final GenerationHistory generationHistory;
 
     private final Runnable action;
-    private final AtomicBoolean stop;
+    private final AtomicBoolean pause;
     private final StringProperty actionNameProperty;
 
     private final StringProperty cycleInformationProperty;
@@ -38,14 +38,14 @@ public class GenerationProcessingQueue extends SynchronousQueue<Generation> impl
         this.action = this::processGenerations;
         this.actionNameProperty = new SimpleStringProperty(ACTION_NAME_PROPERTY_STRING);
         this.cycleInformationProperty = new SimpleStringProperty("  Period: No cycle detected.");
-        this.stop = pipelineExecutor.getStop();
+        this.pause = pipelineExecutor.getPause();
         pipelineExecutor.registerAndRun(this);
     }
 
     public void processGenerations() {
         Generation current = null;
         Optional<Integer> generationIndex;
-        while (!stop.get()) {
+        while (!pause.get()) {
             try {
                 current = take();
             } catch (InterruptedException e) {
@@ -70,7 +70,7 @@ public class GenerationProcessingQueue extends SynchronousQueue<Generation> impl
         int cycleEndIndex = generationHistory.getLastIndex();
         Platform.runLater(() -> logCycleInformation(cycleStartIndex, cycleEndIndex));
 
-        while (!stop.get()) {
+        while (!pause.get()) {
             for (int index = cycleStartIndex; index <= cycleEndIndex; index++) {
                 try {
                     frameProducingQueue.put(generationHistory.unpackFrameAtIndex(index));

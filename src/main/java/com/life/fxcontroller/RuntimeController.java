@@ -1,14 +1,12 @@
 package com.life.fxcontroller;
 
 import com.life.color.RgbConvertedColor;
-import com.life.configuration.IterationSettings;
 import com.life.event.RenderingStageReadyEvent;
 import com.life.event.RuntimeStageReadyEvent;
-import com.life.event.StartRunEvent;
-import com.life.event.StopRunEvent;
 import com.life.pipeline.FrameProducingQueue;
 import com.life.pipeline.GenerationProcessingQueue;
 import com.life.utility.FrameTimer;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -21,7 +19,7 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.ApplicationContext;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ResourceUtils;
@@ -32,8 +30,6 @@ import java.lang.invoke.MethodHandles;
 
 @Component
 public class RuntimeController {
-
-    private Stage stage;
     private final Button startButton;
     private final Button stopButton;
     private final ColorPicker liveColorPicker;
@@ -44,42 +40,31 @@ public class RuntimeController {
 
     private final RgbConvertedColor deadCellRgbConvertedColor;
     private final RgbConvertedColor liveCellRgbConvertedColor;
-
-    private final ApplicationContext context;
-    private final ConfigurationController configurationController;
     private final FrameTimer frameTimer;
     private final GenerationProcessingQueue generationProcessingQueue;
-    private final FrameProducingQueue frameProducingQueue;
-
-    private static final int COLUMNS = IterationSettings.COLUMNS;
-    private static final int ROWS = IterationSettings.ROWS;
-    private static final int INITIAL_POPULATION_PERCENT = IterationSettings.INITIAL_POPULATION_PERCENT;
-    private static final int[] BIRTH = IterationSettings.BIRTH;
-    private static final int[] SURVIVE = IterationSettings.SURVIVE;
+    private final ConfigurableApplicationContext context;
 
     private final static Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-    public RuntimeController(ApplicationContext context, ConfigurationController configurationController, FrameTimer frameTimer, GenerationProcessingQueue generationProcessingQueue,
+    public RuntimeController(ConfigurableApplicationContext context, FrameTimer frameTimer, GenerationProcessingQueue generationProcessingQueue,
                              FrameProducingQueue frameProducingQueue) {
         this.context = context;
-        this.configurationController = configurationController;
         this.frameTimer = frameTimer;
         this.generationProcessingQueue = generationProcessingQueue;
-        this.frameProducingQueue = frameProducingQueue;
         this.startButton = new Button("Start");
         this.stopButton = new Button("Stop");
         this.liveColorPicker = new ColorPicker(Color.LIMEGREEN);
         this.liveCellRgbConvertedColor = new RgbConvertedColor(liveColorPicker.getValue());
         this.deadColorPicker = new ColorPicker(Color.BLACK);
         this.deadCellRgbConvertedColor = new RgbConvertedColor(deadColorPicker.getValue());
-        this.frameProducingQueue.initializeAndLaunch(deadCellRgbConvertedColor, liveCellRgbConvertedColor);
         this.framesPerSecondLabel = new Label();
         this.cycleInformationLabel = new Label();
+        frameProducingQueue.initializeAndLaunch(deadCellRgbConvertedColor, liveCellRgbConvertedColor);
     }
 
     @EventListener
     public void initialize(RuntimeStageReadyEvent event) {
-        stage = event.getStage();
+        Stage stage = event.getStage();
         stage.setTitle("Life");
         File file;
         try {
@@ -113,24 +98,12 @@ public class RuntimeController {
     }
 
     private void go(ActionEvent event) {
-        context.publishEvent(new StartRunEvent());
+        LOG.info("Start Button Click");
     }
 
     private void stop(ActionEvent event) {
-        context.publishEvent(new StopRunEvent());
-    }
-
-    public RgbConvertedColor getDeadCellRgbConvertedColor() {
-        return deadCellRgbConvertedColor;
-    }
-
-    public RgbConvertedColor getLiveCellRgbConvertedColor() {
-        return liveCellRgbConvertedColor;
+        Platform.exit();
+        context.close();
     }
 }
-
-//target frame rate
-//frame rate
-//dropped generations
-//total generations
 

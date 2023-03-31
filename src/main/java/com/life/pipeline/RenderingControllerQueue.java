@@ -30,7 +30,7 @@ public class RenderingControllerQueue extends SynchronousQueue<Frame> implements
     private final PipelineExecutor pipelineExecutor;
 
     private final Runnable action;
-    private final AtomicBoolean stop;
+    private final AtomicBoolean pause;
     private final StringProperty actionNameProperty;
 
     private final ImageView imageView;
@@ -50,7 +50,7 @@ public class RenderingControllerQueue extends SynchronousQueue<Frame> implements
         this.action = this::renderFrames;
         this.actionNameProperty = new SimpleStringProperty(ACTION_NAME_PROPERTY_STRING);
         this.pipelineExecutor = pipelineExecutor;
-        this.stop = pipelineExecutor.getStop();
+        this.pause = pipelineExecutor.getPause();
         WritableImage writableImage = new WritableImage(COLUMNS * SCALING_FACTOR, ROWS * SCALING_FACTOR);
         this.pixelWriter = writableImage.getPixelWriter();
         this.imageView = new ImageView(writableImage);
@@ -69,7 +69,7 @@ public class RenderingControllerQueue extends SynchronousQueue<Frame> implements
     }
 
     public void renderFrames() {
-        while (!stop.get()) {
+        while (!pause.get()) {
             try {
                 pixelWriter.setPixels(0, 0, COLUMNS * SCALING_FACTOR, ROWS * SCALING_FACTOR,
                         pixelFormat, take().buffer, 0, COLUMNS * BYTES_PER_PIXEL * SCALING_FACTOR);
@@ -87,9 +87,5 @@ public class RenderingControllerQueue extends SynchronousQueue<Frame> implements
     @Override
     public StringProperty actionNameProperty() {
         return actionNameProperty;
-    }
-
-    public ImageView getImageView() {
-        return  imageView;
     }
 }
