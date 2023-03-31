@@ -47,7 +47,7 @@ public class RenderingControllerQueue extends SynchronousQueue<Frame> implements
 
     public RenderingControllerQueue(PipelineExecutor pipelineExecutor) {
         super(true);
-        this.action = this::renderFrames;
+        this.action = this::renderFrame;
         this.actionNameProperty = new SimpleStringProperty(ACTION_NAME_PROPERTY_STRING);
         this.pipelineExecutor = pipelineExecutor;
         this.isPaused = pipelineExecutor.isPaused();
@@ -68,7 +68,7 @@ public class RenderingControllerQueue extends SynchronousQueue<Frame> implements
         pipelineExecutor.registerAndRun(this);
     }
 
-    public void renderFrames() {
+    public void renderFrame() {
         while (true) {
             if (isPaused.get()) {
                 continue;

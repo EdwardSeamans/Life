@@ -38,4 +38,12 @@ public class PipelineExecutor extends ThreadPoolExecutor {
         LOG.info("Starting task: " + pipelineComponent.actionNameProperty().get());
         execute(pipelineComponent.getTask());
     }
+
+    // Recover from Quartz Exception:
+    // 1. Catch exception when it occurs
+    // 2. Hide Stage
+    // 3. Regenerate Scene
+    // 4. Add regenerated Scene to Stage
+    // 5. Log at some point
+    // 6. Show Stage
 }
