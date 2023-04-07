@@ -5,6 +5,7 @@ import com.life.payload.Generation;
 import com.life.payload.PackedGeneration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.lang.invoke.MethodHandles;
@@ -43,12 +44,13 @@ public class GenerationHistory implements Resettable {
         return packedHistory.size() - 1;
     }
 
-    public int size() {
-        return packedHistory.size();
-    }
-
     @Override
     public void reset() {
         packedHistory.clear();
+    }
+
+    @Scheduled(fixedRate = 30000)
+    public void logPopulation() {
+        LOG.info("Stored generations: " + this.packedHistory.size());
     }
 }
